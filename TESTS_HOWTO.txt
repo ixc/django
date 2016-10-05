@@ -1,0 +1,18 @@
+To run Django's unit tests
+==========================
+
+Version 1.4
+-----------
+
+    cd tests/
+    PYTHONPATH=.. ./runtests.py --settings=test_sqlite
+
+For specific tests modules:
+
+    PYTHONPATH=.. ./runtests.py --settings=test_sqlite httpwrappers requests
+
+Against PostgreSQL instead of SQLite:
+
+    pip install psycopg2
+    createdb django
+    PYTHONPATH=.. ./runtests.py --settings=test_postgresql
