@@ -39,7 +39,8 @@ try:
 except Cookie.CookieError:
     _cookie_allows_colon_in_names = False
 
-if _morsel_supports_httponly and _cookie_encodes_correctly and _cookie_allows_colon_in_names:
+if _morsel_supports_httponly and _cookie_encodes_correctly and \
+        _cookie_allows_colon_in_names and cookie_pickles_properly:
     SimpleCookie = Cookie.SimpleCookie
 else:
     if not _morsel_supports_httponly:
@@ -103,6 +104,8 @@ else:
                     M.set(key, real_value, coded_value)
                     dict.__setitem__(self, key, M)
                 except Cookie.CookieError:
+                    if not hasattr(self, 'bad_cookies'):
+                        self.bad_cookies = set()
                     self.bad_cookies.add(key)
                     dict.__setitem__(self, key, Cookie.Morsel())
 
@@ -545,20 +548,22 @@ class QueryDict(MultiValueDict):
         return '&'.join(output)
 
 def parse_cookie(cookie):
-    if cookie == '':
-        return {}
-    if not isinstance(cookie, Cookie.BaseCookie):
-        try:
-            c = SimpleCookie()
-            c.load(cookie)
-        except Cookie.CookieError:
-            # Invalid cookie
-            return {}
-    else:
-        c = cookie
+    """
+    Return a dictionary parsed from a `Cookie:` header string.
+    """
     cookiedict = {}
-    for key in c.keys():
-        cookiedict[key] = c.get(key).value
+    cookie = smart_str(cookie)
+    for chunk in cookie.split(str(';')):
+        if str('=') in chunk:
+            key, val = chunk.split(str('='), 1)
+        else:
+            # Assume an empty name per
+            # https://bugzilla.mozilla.org/show_bug.cgi?id=169091
+            key, val = str(''), chunk
+        key, val = key.strip(), val.strip()
+        if key or val:
+            # unquote using Python's algorithm.
+            cookiedict[key] = Cookie._unquote(val)
     return cookiedict
 
 class BadHeaderError(ValueError):
