@@ -1,5 +1,5 @@
 ============================
-Django 1.4.22a release notes
+Django 1.4.22c1 release notes
 ============================
 
 BACKPORT OF 6118ab7d0676f0d622278e5be215f14fb5410b6a
